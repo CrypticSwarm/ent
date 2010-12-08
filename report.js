@@ -31,6 +31,16 @@ function substitute(str, object, regexp){
 	});
 }
 
+function getVals(arr, col){
+	return arr.map(function(item){
+		return (typeof item === 'function' ? item(col) : ('{' + item + '}'));
+	}).join('.');
+}
+
+function getValsSubstitute(arr, col) {
+	return substitute(getVals(arr, col), col);
+}
+
 var ReportMulti = exports.ReportMulti = function(reports, globalFilter){
 		this.reports = reports;
 		this.filter = globalFilter;
@@ -69,14 +79,17 @@ var count = exports.count = function(agg, name, col){
 		}
 	};
 
-var aggregatingReport = exports.aggregatingReport = function(name, pathTemplate, filter, preprocess, aggregator){
-	var data = {};
+var aggregatingReport = exports.aggregatingReport = function(name, pathTemplate, filter, aggregator){
+	var data = {}
+		, pathActivator;
 	pathTemplate = pathTemplate || '';
 	aggregator = aggregator || count;
+	pathActivator = (typeof pathTemplate === 'string')
+		? substitute
+		: getValsSubstitute;
 	return {
 		data: function(col){
-			if (preprocess) preprocess(col);
-			var path = substitute(pathTemplate, col)
+			var path = pathActivator(pathTemplate, col)
 				, item;
 			if (filter && !filter(col)) return;
 			item = getFromPath(data, path, true);
@@ -125,6 +138,6 @@ var pathbasedFilter = exports.pathbasedFilter = function(shouldCount, pathTempla
 		}	
 	}
 	, addHourPreprocess = exports.addHourPreprocess = function(col){
-		col['ic-hour'] = col.time.split(':')[0];
+		return col.time.split(':')[0];
 	};
 
