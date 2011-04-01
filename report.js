@@ -33,12 +33,8 @@ function substitute(str, object, regexp){
 
 function getVals(arr, col){
 	return arr.map(function(item){
-		return (typeof item === 'function' ? item(col) : ('{' + item + '}'));
+		return (typeof item === 'function' ? item(col) : getFromPath(col, item));
 	}).join('.');
-}
-
-function getValsSubstitute(arr, col) {
-	return substitute(getVals(arr, col), col);
 }
 
 var ReportMulti = exports.ReportMulti = function(reports, globalFilter){
@@ -86,7 +82,7 @@ var aggregatingReport = exports.aggregatingReport = function(name, pathTemplate,
 	aggregator = aggregator || count;
 	pathActivator = (typeof pathTemplate === 'string')
 		? substitute
-		: getValsSubstitute;
+		: getVals;
 	return {
 		data: function(col){
 			var path = pathActivator(pathTemplate, col)
